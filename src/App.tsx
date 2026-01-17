@@ -6,6 +6,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
+import Explore from "./pages/Explore";
+import BusinessProfile from "./pages/BusinessProfile";
+import MyBusinesses from "./pages/MyBusinesses";
+import Communities from "./pages/Communities";
+import CommunityDetail from "./pages/CommunityDetail";
+import Messages from "./pages/Messages";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,7 +28,16 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/user/:id" element={<Profile />} />
+            <Route path="/explore" element={<Explore />} />
+            <Route path="/business/:id" element={<BusinessProfile />} />
+            <Route path="/my-businesses" element={<MyBusinesses />} />
+            <Route path="/communities" element={<Communities />} />
+            <Route path="/communities/:id" element={<CommunityDetail />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/messages/:conversationId" element={<Messages />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
