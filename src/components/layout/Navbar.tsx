@@ -116,9 +116,10 @@ export function Navbar() {
                   variant="ghost"
                   size="icon"
                   onClick={() => navigate('/messages')}
-                  className="hidden sm:flex"
+                  className="relative"
                 >
                   <MessageCircle className="h-5 w-5" />
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-secondary rounded-full" />
                 </Button>
 
                 {/* Profile Dropdown */}
