@@ -12,10 +12,19 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, Save, LogOut, Mail, CheckCircle, AlertCircle, AlertTriangle, User } from 'lucide-react';
+import { Camera, Save, LogOut, Mail, CheckCircle, AlertCircle, AlertTriangle, User, Circle } from 'lucide-react';
 import { PanchayathLocationPicker } from '@/components/settings/PanchayathLocationPicker';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
+
+// Field completion indicator component
+const FieldStatus = ({ completed }: { completed: boolean }) => (
+  completed ? (
+    <CheckCircle className="h-4 w-4 text-green-500" />
+  ) : (
+    <Circle className="h-4 w-4 text-muted-foreground/50" />
+  )
+);
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -198,8 +207,11 @@ export default function Settings() {
                   onChange={handleAvatarChange}
                 />
               </div>
-              <div>
-                <p className="font-medium text-foreground">Profile Photo</p>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-foreground">Profile Photo</p>
+                  <FieldStatus completed={!!profile?.avatar_url} />
+                </div>
                 <p className="text-sm text-muted-foreground">JPG, PNG. Max 5MB</p>
               </div>
             </div>
@@ -209,7 +221,10 @@ export default function Settings() {
             {/* Form Fields */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <FieldStatus completed={!!profile?.full_name} />
+                </div>
                 <Input
                   id="fullName"
                   placeholder="Your full name"
@@ -219,7 +234,10 @@ export default function Settings() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="username">Username</Label>
+                  <FieldStatus completed={!!profile?.username} />
+                </div>
                 <Input
                   id="username"
                   placeholder="your_username"
@@ -229,7 +247,10 @@ export default function Settings() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="bio">Bio</Label>
+                  <FieldStatus completed={!!profile?.bio} />
+                </div>
                 <Textarea
                   id="bio"
                   placeholder="Tell us about yourself..."
@@ -242,10 +263,16 @@ export default function Settings() {
               <Separator className="my-2" />
 
               {/* Location - Panchayath & Ward */}
-              <PanchayathLocationPicker 
-                value={location} 
-                onChange={setLocation} 
-              />
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label>Location</Label>
+                  <FieldStatus completed={!!profile?.location} />
+                </div>
+                <PanchayathLocationPicker 
+                  value={location} 
+                  onChange={setLocation} 
+                />
+              </div>
             </div>
 
             <Button 
