@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { TrendingPosts } from './TrendingPosts';
 
 interface SuggestedBusiness {
   id: string;
@@ -168,6 +169,9 @@ export function DiscoverSidebar() {
 
   return (
     <div className="space-y-4">
+      {/* Trending Posts */}
+      <TrendingPosts />
+
       {/* Suggested Businesses */}
       <Card className="sticky top-20 shadow-soft border-0">
         <CardHeader className="pb-3">

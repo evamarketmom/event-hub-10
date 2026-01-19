@@ -64,7 +64,7 @@ interface Post {
 export default function Profile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, profile: currentUserProfile } = useAuth();
+  const { user, profile: currentUserProfile, isEmailVerified } = useAuth();
   const { toast } = useToast();
   
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
@@ -272,7 +272,7 @@ export default function Profile() {
                     <h1 className="text-2xl font-bold text-foreground flex items-center">
                       {profileData.full_name || 'Anonymous'}
                       <VerificationBadge 
-                        isVerified={!!profileData.is_verified} 
+                        isVerified={isOwnProfile ? isEmailVerified : !!profileData.is_verified} 
                         size="md" 
                         showNotVerified={isOwnProfile}
                       />

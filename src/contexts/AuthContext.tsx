@@ -100,29 +100,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUpWithEmail = async (email: string, password: string, fullName: string, username?: string, phoneNumber?: string) => {
-    // For phone number signups, we skip email verification by using a special flow
+    // For phone number signups, we use a fake email format and auto-confirm
     const isPhoneSignup = email.endsWith('@phone.local');
     
     const { error, data } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        // Skip email verification for phone signups
-        emailRedirectTo: isPhoneSignup ? undefined : `${window.location.origin}/`,
+        // No email redirect - user is auto logged in
+        emailRedirectTo: `${window.location.origin}/`,
         data: {
           full_name: fullName,
-          username: username || null,
+          username: isPhoneSignup ? phoneNumber : (username || null),
           phone_number: phoneNumber || null,
         },
       },
     });
     
-    // Update profile after signup
+    // Update profile after signup with phone as username if phone signup
     if (!error && data.user) {
       await supabase
         .from('profiles')
         .update({ 
-          username: username || null, 
+          username: isPhoneSignup ? phoneNumber : (username || null), 
           full_name: fullName,
         })
         .eq('id', data.user.id);
