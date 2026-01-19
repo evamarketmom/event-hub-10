@@ -58,40 +58,40 @@ export function ProfileCompletionBanner({
       variant="default" 
       className={`border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 ${className}`}
     >
-      <AlertCircle className="h-5 w-5 text-amber-500" />
-      <div className="flex-1">
-        <AlertTitle className="text-amber-700 dark:text-amber-400 flex items-center justify-between">
-          Complete Your Profile
+      <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
+      <div className="flex-1 flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-300">
+          <span className="font-medium text-amber-700 dark:text-amber-400">Complete profile:</span>
+          <span className="flex items-center gap-1">
+            {issues.map((issue, i) => (
+              <span key={i} className="flex items-center gap-1">
+                {issue.text}
+                {i < issues.length - 1 && <span className="text-amber-400">•</span>}
+              </span>
+            ))}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs border-amber-500 text-amber-700 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-950"
+            onClick={() => navigate('/settings')}
+          >
+            <Settings className="mr-1 h-3 w-3" />
+            Settings
+          </Button>
           {showCloseButton && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 -mr-2"
+              className="h-6 w-6"
               onClick={() => setDismissed(true)}
             >
               <X className="h-4 w-4" />
             </Button>
           )}
-        </AlertTitle>
-        <AlertDescription className="text-amber-600 dark:text-amber-300">
-          <ul className="mt-2 space-y-1 text-sm">
-            {issues.map((issue, i) => (
-              <li key={i} className="flex items-center gap-2">
-                {issue.icon}
-                {issue.text}
-              </li>
-            ))}
-          </ul>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3 border-amber-500 text-amber-700 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-950"
-            onClick={() => navigate('/settings')}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Go to Settings
-          </Button>
-        </AlertDescription>
+        </div>
       </div>
     </Alert>
   );
