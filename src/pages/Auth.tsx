@@ -8,18 +8,15 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Mail, Lock, User, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Phone, Lock, User, ArrowLeft, Mail } from 'lucide-react';
 import { z } from 'zod';
 import { Checkbox } from '@/components/ui/checkbox';
 
-const emailOrPhoneSchema = z.string().min(1, 'Email or mobile number is required').refine(
-  (val) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^[0-9]{10}$/;
-    return emailRegex.test(val) || phoneRegex.test(val);
-  },
-  { message: 'Please enter a valid email or 10-digit mobile number' }
+const phoneSchema = z.string().min(1, 'Mobile number is required').refine(
+  (val) => /^[0-9]{10}$/.test(val),
+  { message: 'Please enter a valid 10-digit mobile number' }
 );
+const emailOrPhoneSchema = z.string().min(1, 'Email or mobile number is required');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 const nameSchema = z.string().min(2, 'Name must be at least 2 characters');
 
@@ -28,6 +25,7 @@ export default function Auth() {
   const initialMode = searchParams.get('mode') === 'signup' ? 'signup' : 'signin';
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
   const [emailOrPhone, setEmailOrPhone] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -63,10 +61,10 @@ export default function Auth() {
         newErrors.emailOrPhone = 'Email or mobile number is required';
       }
     } else {
-      // For sign up, validate email/phone format
-      const emailOrPhoneResult = emailOrPhoneSchema.safeParse(emailOrPhone);
-      if (!emailOrPhoneResult.success) {
-        newErrors.emailOrPhone = emailOrPhoneResult.error.errors[0].message;
+      // For sign up, validate mobile number only
+      const phoneResult = phoneSchema.safeParse(mobileNumber);
+      if (!phoneResult.success) {
+        newErrors.mobileNumber = phoneResult.error.errors[0].message;
       }
     }
 
@@ -99,11 +97,10 @@ export default function Auth() {
     if (!validate()) return;
     setLoading(true);
 
-    // Convert phone to email format if needed (for Supabase auth)
-    const authEmail = isEmail(emailOrPhone) ? emailOrPhone : `${emailOrPhone}@phone.local`;
-
     try {
       if (mode === 'signin') {
+        // For sign in, convert phone to email format if needed
+        const authEmail = isEmail(emailOrPhone) ? emailOrPhone : `${emailOrPhone}@phone.local`;
         const { error } = await signInWithEmail(authEmail, password);
         if (error) {
           toast({
@@ -113,9 +110,9 @@ export default function Auth() {
           });
         }
       } else {
-        // Pass phone number if it's a phone signup
-        const phoneNumber = !isEmail(emailOrPhone) ? emailOrPhone : undefined;
-        const { error } = await signUpWithEmail(authEmail, password, fullName, undefined, phoneNumber);
+        // For sign up, use mobile number only - convert to email format for Supabase
+        const authEmail = `${mobileNumber}@phone.local`;
+        const { error } = await signUpWithEmail(authEmail, password, fullName, undefined, mobileNumber);
         if (error) {
           toast({
             title: 'Sign up failed',
@@ -191,26 +188,46 @@ export default function Auth() {
                     {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
                   </div>
 
+                  {/* Mobile Number for Sign Up */}
+                  <div className="space-y-2">
+                    <Label htmlFor="mobileNumber">Mobile Number</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="mobileNumber" 
+                        type="tel"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={10}
+                        placeholder="Enter 10-digit mobile number"
+                        className="pl-10" 
+                        value={mobileNumber} 
+                        onChange={e => setMobileNumber(e.target.value.replace(/\D/g, ''))} 
+                      />
+                    </div>
+                    {errors.mobileNumber && <p className="text-sm text-destructive">{errors.mobileNumber}</p>}
+                  </div>
+
                 </TabsContent>
 
-                {/* Email or Phone */}
-                <div className="space-y-2">
-                  <Label htmlFor="emailOrPhone">
-                    {mode === 'signup' ? 'Email or Mobile Number' : 'Email / Mobile'}
-                  </Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      id="emailOrPhone" 
-                      type="text"
-                      placeholder={mode === 'signup' ? "Enter email or 10-digit mobile" : "Email or mobile number"}
-                      className="pl-10" 
-                      value={emailOrPhone} 
-                      onChange={e => setEmailOrPhone(e.target.value.trim())} 
-                    />
+                {/* Email or Phone for Sign In only */}
+                {mode === 'signin' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="emailOrPhone">Email / Mobile</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="emailOrPhone" 
+                        type="text"
+                        placeholder="Email or mobile number"
+                        className="pl-10" 
+                        value={emailOrPhone} 
+                        onChange={e => setEmailOrPhone(e.target.value.trim())} 
+                      />
+                    </div>
+                    {errors.emailOrPhone && <p className="text-sm text-destructive">{errors.emailOrPhone}</p>}
                   </div>
-                  {errors.emailOrPhone && <p className="text-sm text-destructive">{errors.emailOrPhone}</p>}
-                </div>
+                )}
 
                 {/* Password */}
                 <div className="space-y-2">
