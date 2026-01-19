@@ -50,8 +50,6 @@ export default function Auth() {
     }
   }, [user, navigate]);
 
-  const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
@@ -100,7 +98,8 @@ export default function Auth() {
     try {
       if (mode === 'signin') {
         // For sign in, convert phone to email format if needed
-        const authEmail = isEmail(emailOrPhone) ? emailOrPhone : `${emailOrPhone}@phone.local`;
+        const isEmailInput = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailOrPhone);
+        const authEmail = isEmailInput ? emailOrPhone : `${emailOrPhone}@sms.samrambhak.app`;
         const { error } = await signInWithEmail(authEmail, password);
         if (error) {
           toast({
@@ -111,7 +110,7 @@ export default function Auth() {
         }
       } else {
         // For sign up, use mobile number only - convert to email format for Supabase
-        const authEmail = `${mobileNumber}@phone.local`;
+        const authEmail = `${mobileNumber}@sms.samrambhak.app`;
         const { error } = await signUpWithEmail(authEmail, password, fullName, undefined, mobileNumber);
         if (error) {
           toast({

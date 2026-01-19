@@ -100,8 +100,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUpWithEmail = async (email: string, password: string, fullName: string, username?: string, phoneNumber?: string) => {
-    // For phone number signups, we use a fake email format and auto-confirm
-    const isPhoneSignup = email.endsWith('@phone.local');
+    // For phone number signups, we use a synthetic email format
+    const isPhoneSignup = email.endsWith('@sms.samrambhak.app');
     
     const { error, data } = await supabase.auth.signUp({
       email,
