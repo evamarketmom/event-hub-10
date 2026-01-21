@@ -729,6 +729,7 @@ export type Database = {
           blocked_by: string | null
           chat_disabled: boolean | null
           created_at: string | null
+          date_of_birth: string | null
           email: string | null
           email_verification_sent_at: string | null
           email_verification_token: string | null
@@ -755,6 +756,7 @@ export type Database = {
           blocked_by?: string | null
           chat_disabled?: boolean | null
           created_at?: string | null
+          date_of_birth?: string | null
           email?: string | null
           email_verification_sent_at?: string | null
           email_verification_token?: string | null
@@ -781,6 +783,7 @@ export type Database = {
           blocked_by?: string | null
           chat_disabled?: boolean | null
           created_at?: string | null
+          date_of_birth?: string | null
           email?: string | null
           email_verification_sent_at?: string | null
           email_verification_token?: string | null

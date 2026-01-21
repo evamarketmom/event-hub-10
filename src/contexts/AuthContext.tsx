@@ -34,7 +34,7 @@ interface AuthContextType {
   loading: boolean;
   isProfileComplete: boolean;
   signInWithMobile: (mobileNumber: string, password: string) => Promise<{ error: Error | null }>;
-  signUpWithMobile: (mobileNumber: string, password: string, fullName: string, username: string) => Promise<{ error: Error | null }>;
+  signUpWithMobile: (mobileNumber: string, password: string, fullName: string, username: string, dateOfBirth?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signUpWithMobile = async (mobileNumber: string, password: string, fullName: string, username: string) => {
+  const signUpWithMobile = async (mobileNumber: string, password: string, fullName: string, username: string, dateOfBirth?: string) => {
     try {
       const response = await supabase.functions.invoke('mobile-auth', {
         body: {
@@ -127,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password,
           full_name: fullName,
           username,
+          date_of_birth: dateOfBirth,
         },
       });
 

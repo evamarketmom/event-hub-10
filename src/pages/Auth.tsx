@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import logoImg from '@/assets/logo.jpg';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,10 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Phone, Lock, User, ArrowLeft, AtSign, Check, X, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Phone, Lock, User, ArrowLeft, AtSign, Check, X, Loader2, CalendarIcon } from 'lucide-react';
 import { z } from 'zod';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 const phoneSchema = z.string().min(1, 'Mobile number is required').refine(
   (val) => /^[0-9]{10}$/.test(val),
@@ -42,6 +46,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isOver18, setIsOver18] = useState(false);
+  const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(undefined);
   
   const { user, signUpWithMobile, signInWithMobile } = useAuth();
   const navigate = useNavigate();
@@ -185,6 +190,11 @@ export default function Auth() {
         newErrors.age = 'You must confirm you are 18 years or older';
       }
 
+      // Validate date of birth
+      if (!dateOfBirth) {
+        newErrors.dateOfBirth = 'Date of birth is required';
+      }
+
       // Check if mobile number already exists (only for signup)
       if (!newErrors.mobileNumber) {
         const exists = await checkMobileExists(mobileNumber);
@@ -226,7 +236,7 @@ export default function Auth() {
           });
         }
       } else {
-        const { error } = await signUpWithMobile(mobileNumber, password, fullName, finalUsername);
+        const { error } = await signUpWithMobile(mobileNumber, password, fullName, finalUsername, dateOfBirth ? format(dateOfBirth, 'yyyy-MM-dd') : undefined);
         if (error) {
           toast({
             title: 'Sign up failed',
@@ -486,22 +496,61 @@ export default function Auth() {
                 )}
 
                 {mode === 'signup' && (
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="age-verification" 
-                        checked={isOver18}
-                        onCheckedChange={(checked) => setIsOver18(checked === true)}
-                      />
-                      <Label 
-                        htmlFor="age-verification" 
-                        className="text-sm font-normal cursor-pointer"
-                      >
-                        I confirm that I am 18 years of age or older
-                      </Label>
+                  <>
+                    {/* Date of Birth */}
+                    <div className="space-y-2">
+                      <Label>Date of Birth</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !dateOfBirth && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateOfBirth ? format(dateOfBirth, "PPP") : <span>Pick your date of birth</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={dateOfBirth}
+                            onSelect={setDateOfBirth}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                            captionLayout="dropdown-buttons"
+                            fromYear={1920}
+                            toYear={new Date().getFullYear()}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <p className="text-xs text-muted-foreground">Your date of birth is private and only visible to admins</p>
+                      {errors.dateOfBirth && <p className="text-sm text-destructive">{errors.dateOfBirth}</p>}
                     </div>
-                    {errors.age && <p className="text-sm text-destructive">{errors.age}</p>}
-                  </div>
+
+                    {/* Age verification checkbox */}
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="age-verification" 
+                          checked={isOver18}
+                          onCheckedChange={(checked) => setIsOver18(checked === true)}
+                        />
+                        <Label 
+                          htmlFor="age-verification" 
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          I confirm that I am 18 years of age or older
+                        </Label>
+                      </div>
+                      {errors.age && <p className="text-sm text-destructive">{errors.age}</p>}
+                    </div>
+                  </>
                 )}
 
                 <Button 

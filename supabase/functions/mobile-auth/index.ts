@@ -47,7 +47,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, mobile_number, password, full_name, username } = await req.json();
+    const { action, mobile_number, password, full_name, username, date_of_birth } = await req.json();
 
     if (!mobile_number || !password) {
       return new Response(
@@ -121,15 +121,21 @@ serve(async (req) => {
         );
       }
 
-      // Create profile
+      // Create profile with optional date_of_birth
+      const profileData: Record<string, any> = {
+        id: credentials.id,
+        full_name,
+        mobile_number,
+        username: username.toLowerCase(),
+      };
+      
+      if (date_of_birth) {
+        profileData.date_of_birth = date_of_birth;
+      }
+
       const { error: profileError } = await supabase
         .from("profiles")
-        .insert({
-          id: credentials.id,
-          full_name,
-          mobile_number,
-          username: username.toLowerCase(),
-        });
+        .insert(profileData);
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
