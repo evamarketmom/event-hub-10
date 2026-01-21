@@ -25,8 +25,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { MoreHorizontal, Ban, UserCheck, MessageCircleOff, Clock, Trash2, Eye } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { MoreHorizontal, Ban, UserCheck, MessageCircleOff, Clock, Trash2, Eye, Cake } from 'lucide-react';
+import { formatDistanceToNow, format, differenceInYears } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface User {
@@ -41,6 +41,7 @@ interface User {
   chat_disabled: boolean | null;
   created_at: string | null;
   last_seen: string | null;
+  date_of_birth: string | null;
 }
 
 export default function AdminUsers() {
@@ -214,6 +215,25 @@ export default function AdminUsers() {
             ? formatDistanceToNow(new Date(user.last_seen), { addSuffix: true })
             : 'Never'}
         </span>
+      ),
+    },
+    {
+      key: 'date_of_birth',
+      header: 'DOB / Age',
+      render: (user) => (
+        <div className="flex items-center gap-1 text-sm">
+          {user.date_of_birth ? (
+            <>
+              <Cake className="h-3 w-3 text-muted-foreground" />
+              <span>{format(new Date(user.date_of_birth), 'dd MMM yyyy')}</span>
+              <span className="text-muted-foreground">
+                ({differenceInYears(new Date(), new Date(user.date_of_birth))} yrs)
+              </span>
+            </>
+          ) : (
+            <span className="text-muted-foreground">Not provided</span>
+          )}
+        </div>
       ),
     },
     {
