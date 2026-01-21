@@ -17,8 +17,10 @@ import {
   Crown,
   Send,
   MessageSquare,
-  Trash2
+  Trash2,
+  BarChart3
 } from 'lucide-react';
+import { PollsTab } from '@/components/community/PollsTab';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Community {
@@ -330,15 +332,19 @@ export default function CommunityDetail() {
         </Card>
 
         {/* Tabs */}
-        <Tabs defaultValue="members" className="w-full">
-          <TabsList className="grid grid-cols-2 w-full max-w-md">
-            <TabsTrigger value="members">
-              <Users className="h-4 w-4 mr-1" />
-              Members
-            </TabsTrigger>
+        <Tabs defaultValue="discussions" className="w-full">
+          <TabsList className="grid grid-cols-3 w-full max-w-lg">
             <TabsTrigger value="discussions">
               <MessageSquare className="h-4 w-4 mr-1" />
               Discussions
+            </TabsTrigger>
+            <TabsTrigger value="polls">
+              <BarChart3 className="h-4 w-4 mr-1" />
+              Polls
+            </TabsTrigger>
+            <TabsTrigger value="members">
+              <Users className="h-4 w-4 mr-1" />
+              Members
             </TabsTrigger>
           </TabsList>
 
@@ -376,6 +382,10 @@ export default function CommunityDetail() {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          <TabsContent value="polls" className="mt-4">
+            <PollsTab communityId={id!} isMember={isMember} />
           </TabsContent>
 
           <TabsContent value="discussions" className="mt-4 space-y-4">
