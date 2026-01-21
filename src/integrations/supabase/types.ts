@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_requests: {
+        Row: {
+          cancelled_at: string | null
+          deleted_at: string | null
+          id: string
+          requested_at: string
+          scheduled_deletion_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          requested_at?: string
+          scheduled_deletion_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          requested_at?: string
+          scheduled_deletion_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_activity_logs: {
         Row: {
           action: string

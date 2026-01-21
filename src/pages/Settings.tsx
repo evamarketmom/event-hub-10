@@ -13,11 +13,22 @@ import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, Save, LogOut, Phone, CheckCircle, AlertTriangle, Circle, Mail, Eye, EyeOff, Shield, BadgeCheck, Loader2, Send, MapPin } from 'lucide-react';
+import { Camera, Save, LogOut, Phone, CheckCircle, AlertTriangle, Circle, Mail, Eye, EyeOff, Shield, BadgeCheck, Loader2, Send, MapPin, Trash2, XCircle } from 'lucide-react';
 import { PanchayathLocationPicker } from '@/components/settings/PanchayathLocationPicker';
 import { FollowStats } from '@/components/settings/FollowStats';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 // Field completion indicator component
 const FieldStatus = ({ completed }: { completed: boolean }) => (
@@ -52,6 +63,16 @@ export default function Settings() {
   const [showLocation, setShowLocation] = useState(profile?.show_location ?? true);
   const [savingPrivacy, setSavingPrivacy] = useState(false);
 
+  // Account deletion state
+  const [deletionRequest, setDeletionRequest] = useState<{
+    id: string;
+    scheduled_deletion_at: string;
+    status: string;
+  } | null>(null);
+  const [loadingDeletion, setLoadingDeletion] = useState(false);
+  const [requestingDeletion, setRequestingDeletion] = useState(false);
+  const [cancellingDeletion, setCancellingDeletion] = useState(false);
+
   // Check for unsaved profile changes
   const hasUnsavedProfileChanges = profile && (
     fullName !== (profile.full_name || '') ||
@@ -72,6 +93,32 @@ export default function Settings() {
       setShowLocation(profile.show_location ?? true);
     }
   }, [profile]);
+
+  // Check deletion status on mount
+  useEffect(() => {
+    const checkDeletionStatus = async () => {
+      if (!user?.id) return;
+      
+      setLoadingDeletion(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('manage-account-deletion', {
+          body: { action: 'get_status', user_id: user.id }
+        });
+        
+        if (error) throw error;
+        
+        if (data?.has_pending_request && data?.deletion_request) {
+          setDeletionRequest(data.deletion_request);
+        }
+      } catch (error) {
+        console.error('Error checking deletion status:', error);
+      } finally {
+        setLoadingDeletion(false);
+      }
+    };
+
+    checkDeletionStatus();
+  }, [user?.id]);
 
   if (!user) {
     navigate('/auth');
@@ -234,6 +281,70 @@ export default function Settings() {
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
+  };
+
+  const handleRequestDeletion = async () => {
+    setRequestingDeletion(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-account-deletion', {
+        body: { action: 'request_deletion', user_id: user.id }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setDeletionRequest(data.deletion_request);
+      toast({
+        title: 'Account deletion scheduled',
+        description: 'Your account will be permanently deleted in 3 days. You can cancel this request anytime before that.'
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error requesting deletion',
+        description: error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setRequestingDeletion(false);
+    }
+  };
+
+  const handleCancelDeletion = async () => {
+    setCancellingDeletion(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-account-deletion', {
+        body: { action: 'cancel_deletion', user_id: user.id }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setDeletionRequest(null);
+      toast({
+        title: 'Deletion cancelled',
+        description: 'Your account deletion request has been cancelled.'
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error cancelling deletion',
+        description: error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setCancellingDeletion(false);
+    }
+  };
+
+  const formatDeletionDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   // Calculate profile completion
@@ -550,6 +661,90 @@ export default function Settings() {
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
             </Button>
+
+            <Separator />
+
+            {/* Delete Account Section */}
+            <div className="pt-2">
+              <h3 className="text-sm font-medium text-destructive mb-2">Danger Zone</h3>
+              
+              {loadingDeletion ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Checking deletion status...</span>
+                </div>
+              ) : deletionRequest ? (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Account Deletion Scheduled</AlertTitle>
+                  <AlertDescription className="space-y-2">
+                    <p>Your account will be permanently deleted on:</p>
+                    <p className="font-semibold">{formatDeletionDate(deletionRequest.scheduled_deletion_at)}</p>
+                    <p className="text-xs">All your data including posts, comments, and profile will be removed. You can cancel this request before the scheduled date.</p>
+                  </AlertDescription>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCancelDeletion}
+                    disabled={cancellingDeletion}
+                    className="mt-3"
+                  >
+                    {cancellingDeletion ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Cancelling...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Cancel Deletion Request
+                      </>
+                    )}
+                  </Button>
+                </Alert>
+              ) : (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Account
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-destructive">Delete Account</AlertDialogTitle>
+                      <AlertDialogDescription className="space-y-2">
+                        <p>Are you sure you want to delete your account? This action will:</p>
+                        <ul className="list-disc list-inside text-sm space-y-1 mt-2">
+                          <li>Schedule your account for permanent deletion in 3 days</li>
+                          <li>Remove all your posts, comments, and profile data</li>
+                          <li>Delete all your messages and conversations</li>
+                          <li>Remove your businesses and community memberships</li>
+                        </ul>
+                        <p className="mt-3 font-medium">You can cancel this request anytime within the 3-day period.</p>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleRequestDeletion}
+                        disabled={requestingDeletion}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {requestingDeletion ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          'Yes, Delete My Account'
+                        )}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
